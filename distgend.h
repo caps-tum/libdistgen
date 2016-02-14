@@ -19,6 +19,7 @@ extern "C" {
 #endif
 
 #define DISTGEN_MAXTHREADS 64
+#define CGROUP_NAME "distgend"
 
 typedef struct {
 	size_t number_of_threads;
@@ -49,10 +50,6 @@ double distgend_is_membound(distgend_configT config);
  * Returns the GB/s expected for the giving config if the system is idle.
  */
 double distgend_get_max_bandwidth(distgend_configT config);
-
-// TODO: do we need any of these?
-// double distgen_is_L3bound(distgen_configT config);
-// double distgen_is_loadbound(distgen_configT config);
 
 #ifdef __cplusplus
 }

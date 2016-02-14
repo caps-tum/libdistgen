@@ -18,9 +18,9 @@
 
 int main() {
 	distgend_initT init;
-	init.SMT_factor = 2;
+	init.SMT_factor = 1;
 	init.NUMA_domains = 1;
-	init.number_of_threads = 8;
+	init.number_of_threads = 4;
 
 	std::cout << "Starting distgen initialization ...";
 	std::cout.flush();
@@ -28,7 +28,7 @@ int main() {
 	std::cout << " done!" << std::endl << std::endl;
 
 	distgend_configT config;
-	for (int i = 0; i < 8; ++i) {
+	for (size_t i = 0; i < init.number_of_threads; ++i) {
 		config.number_of_threads = i + 1;
 		config.threads_to_use[i] = i;
 		std::cout << "Using " << i + 1 << " threads:" << std::endl;

@@ -13,14 +13,17 @@
 #define _GNU_SOURCE
 //#define __USE_GNU
 
+#include <assert.h>
+#include <sched.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
-#include <sys/syscall.h>
-#include <sched.h>
-#include <assert.h>
 
 #include <omp.h>
+
+#include "vendor/ponci/ponci.h"
 
 // TODO We currently allocate the buffers once, should we change this?
 
@@ -32,7 +35,6 @@ static distgend_initT system_config;
 
 // Prototypes
 static void set_affinity(distgend_initT init);
-static void check_affinity(distgend_initT init);
 static double bench(distgend_configT config);
 
 void distgend_init(distgend_initT init) {
@@ -60,7 +62,6 @@ void distgend_init(distgend_initT init) {
 	omp_set_num_threads(tcount);
 
 	set_affinity(init);
-	check_affinity(init);
 
 	initBufs();
 
@@ -71,8 +72,6 @@ void distgend_init(distgend_initT init) {
 		config.threads_to_use[i] = i;
 
 		distgen_mem_bw_results[i] = bench(config);
-
-		check_affinity(init);
 	}
 }
 
@@ -105,8 +104,6 @@ double distgend_get_max_bandwidth(distgend_configT config) {
 }
 
 double distgend_is_membound(distgend_configT config) {
-	check_affinity(system_config);
-
 	// run benchmark on given cores
 	// compare the result with distgend_get_max_bandwidth();
 	const double m = bench(config);
@@ -149,6 +146,10 @@ static double bench(distgend_configT config) {
 }
 
 static void set_affinity(distgend_initT init) {
+	cgroup_create(CGROUP_NAME);
+
+	size_t *arr = malloc(sizeof(size_t) * init.number_of_threads);
+
 	const size_t phys_cores_per_numa = init.number_of_threads / (init.NUMA_domains * init.SMT_factor);
 
 	size_t i = 0;
@@ -157,20 +158,7 @@ static void set_affinity(distgend_initT init) {
 		size_t next_core = n * phys_cores_per_numa;
 		for (size_t s = 0; s < init.SMT_factor; ++s) {
 			for (size_t c = 0; c < phys_cores_per_numa; ++c) {
-#pragma omp parallel
-				{
-					if ((size_t)omp_get_thread_num() == i) {
-						// set thread affinity
-						cpu_set_t set;
-						CPU_ZERO(&set);
-						CPU_SET(next_core, &set);
-
-						assert(sched_setaffinity(0, sizeof(set), &set) == 0);
-						// pid_t tid = (pid_t)syscall(SYS_gettid);
-						// printf("I'm thread %d, %2d, on core %d.\n", tid, omp_get_thread_num(), sched_getcpu());
-					}
-				}
-
+				arr[i] = next_core;
 				++next_core;
 				++i;
 			}
@@ -178,40 +166,11 @@ static void set_affinity(distgend_initT init) {
 		}
 	}
 	assert(i == init.number_of_threads);
-}
 
-static void check_affinity(distgend_initT init) {
-	const size_t phys_cores_per_numa = init.number_of_threads / (init.NUMA_domains * init.SMT_factor);
+	cgroup_set_cpus(CGROUP_NAME, arr, init.number_of_threads);
 
-// we expect there to a thread pool. Check if affinity is still ok.
-#pragma omp parallel
-	{
-		size_t s = 0;
-		size_t t = (size_t)omp_get_thread_num();
-		size_t n = (t / phys_cores_per_numa);
-		while (n >= init.NUMA_domains) {
-			assert(init.SMT_factor > 1);
-			++s;
-			--n;
-		}
-		size_t c = t % phys_cores_per_numa;
+	for (size_t n = 0; n < init.NUMA_domains; ++n) arr[n] = n;
+	cgroup_set_mems(CGROUP_NAME, arr, init.NUMA_domains);
 
-		size_t i = 0;
-		i += n * init.SMT_factor * phys_cores_per_numa;
-		i += s * phys_cores_per_numa;
-		i += c;
-
-		cpu_set_t set;
-		CPU_ZERO(&set);
-
-		pid_t tid = (pid_t)syscall(SYS_gettid);
-
-		assert(sched_getaffinity(tid, sizeof(set), &set) == 0);
-
-		cpu_set_t expected_res;
-		CPU_ZERO(&expected_res);
-		CPU_SET(i, &expected_res);
-
-		assert(CPU_EQUAL(&set, &expected_res) != 0);
-	}
+	cgroup_add_me(CGROUP_NAME);
 }
