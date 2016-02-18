@@ -32,7 +32,7 @@ static void sleeper(const std::string name) {
 	std::cout << "Aaaah, its warm again!" << std::endl;
 }
 
-int main(int argc, char const *argv[]) {
+int main(/*int argc, char const *argv[]*/) {
 	const std::string name("ponci_test");
 
 	cgroup_create(name);

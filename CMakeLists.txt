@@ -17,6 +17,9 @@ string( TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE )
 project(distgend)
 ########
 
+# Enable support for external projects
+include(ExternalProject)
+
 ########
 # Compiler/linker options based on the different compilers
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -60,11 +63,28 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 ########
 
 ########
+# ponci
+ExternalProject_Add(libponci
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/ponci
+    CONFIGURE_COMMAND  CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> ${CMAKE_CURRENT_SOURCE_DIR}/vendor/ponci
+    BUILD_IN_SOURCE 0
+    BUILD_COMMAND ${MAKE})
+
+# Store libmosquitto variable in directory
+ExternalProject_Get_Property(libponci install_dir)
+set (libponci_path ${install_dir})
+include_directories(${libponci_path}/include)
+link_directories(${libponci_path}/lib)
+########
+
+########
 # Compiling and linking
 add_executable(distgen distgen.c distgen_internal.c)
 set_property(TARGET distgen PROPERTY C_STANDARD 99)
 
-add_executable(distgend_test test.cpp distgen_internal.c distgend.c vendor/ponci/ponci.cpp)
+add_executable(distgend_test test.cpp distgen_internal.c distgend.c)
+add_dependencies(distgend_test libponci)
+target_link_libraries(distgend_test ponci)
 set_property(TARGET distgend_test PROPERTY CXX_STANDARD 11)
 set_property(TARGET distgend_test PROPERTY C_STANDARD 99)
 ########
