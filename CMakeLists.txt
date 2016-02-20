@@ -15,10 +15,9 @@ string( TOLOWER "${CMAKE_BUILD_TYPE}" CMAKE_BUILD_TYPE )
 ########
 # General project settings
 project(distgend)
-########
-
 # Enable support for external projects
 include(ExternalProject)
+########
 
 ########
 # Compiler/linker options based on the different compilers
@@ -70,7 +69,7 @@ ExternalProject_Add(libponci
     BUILD_IN_SOURCE 0
     BUILD_COMMAND ${MAKE})
 
-# Store libmosquitto variable in directory
+# Store ponci variable in directory
 ExternalProject_Get_Property(libponci install_dir)
 set (libponci_path ${install_dir})
 include_directories(${libponci_path}/include)
@@ -82,9 +81,15 @@ link_directories(${libponci_path}/lib)
 add_executable(distgen distgen.c distgen_internal.c)
 set_property(TARGET distgen PROPERTY C_STANDARD 99)
 
-add_executable(distgend_test test.cpp distgen_internal.c distgend.c)
+add_library(distgend distgen_internal.c distgend.c)
+add_dependencies(distgend libponci)
+set_property(TARGET distgend PROPERTY C_STANDARD 99)
+INSTALL(TARGETS distgend DESTINATION "lib")
+INSTALL(FILES distgend.h DESTINATION "include")
+
+add_executable(distgend_test test.cpp )
 add_dependencies(distgend_test libponci)
-target_link_libraries(distgend_test ponci)
+target_link_libraries(distgend_test distgend ponci)
 set_property(TARGET distgend_test PROPERTY CXX_STANDARD 11)
 set_property(TARGET distgend_test PROPERTY C_STANDARD 99)
 ########

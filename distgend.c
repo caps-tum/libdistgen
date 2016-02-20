@@ -23,7 +23,7 @@
 
 #include <omp.h>
 
-#include "vendor/ponci/ponci.h"
+#include "ponci/ponci.h"
 
 // TODO We currently allocate the buffers once, should we change this?
 

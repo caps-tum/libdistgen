@@ -64,7 +64,7 @@ find_package(Threads REQUIRED)
 add_library(ponci ponci.cpp)
 set_property(TARGET ponci PROPERTY CXX_STANDARD 11)
 INSTALL(TARGETS ponci DESTINATION "lib")
-INSTALL(FILES ponci.h ponci.hpp DESTINATION "include")
+INSTALL(FILES ponci.h ponci.hpp DESTINATION "include/ponci")
 
 
 add_executable(ponci_test test.cpp)
