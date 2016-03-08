@@ -4,17 +4,17 @@
  * Jens Breitbart     <j.breitbart@tum.de>
  * Josef Weidendorfer <weidendo@in.tum.de>
  *
- * Licensed under GNU General Public License 2.0 or later.
+ * Licensed under GNU Lesser General Public License 2.1 or later.
  * Some rights reserved. See LICENSE
  */
 
-#include "distgend.h"
 #include "distgen_internal.h"
+#include "distgend.h"
 
-#include <stdio.h>
-#include <stdlib.h>
 #include <assert.h>
 #include <malloc.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <sys/time.h>
 
 #include <omp.h>
