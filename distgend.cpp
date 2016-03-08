@@ -23,7 +23,7 @@
 
 #include <omp.h>
 
-#include "ponci/ponci.h"
+#include "ponci/ponci.hpp"
 
 // TODO We currently allocate the buffers once, should we change this?
 
@@ -126,9 +126,6 @@ static double bench(distgend_configT config) {
 		size_t tid = (size_t)omp_get_thread_num();
 		for (size_t i = 0; i < config.number_of_threads; ++i) {
 			if (tid == config.threads_to_use[i]) {
-				// pid_t tid = (pid_t)syscall(SYS_gettid);
-				// #pragma omp critical
-				//{ printf("I'm thread %d, %2d, on core %d.\n", tid, omp_get_thread_num(), sched_getcpu()); }
 				double tsum = 0.0;
 				u64 taCount = 0;
 
@@ -148,7 +145,7 @@ static double bench(distgend_configT config) {
 static void set_affinity(distgend_initT init) {
 	cgroup_create(CGROUP_NAME);
 
-	size_t *arr = malloc(sizeof(size_t) * init.number_of_threads);
+	size_t *arr = (size_t *)malloc(sizeof(size_t) * init.number_of_threads);
 
 	const size_t phys_cores_per_numa = init.number_of_threads / (init.NUMA_domains * init.SMT_factor);
 

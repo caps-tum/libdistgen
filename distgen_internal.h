@@ -11,6 +11,10 @@
 #ifndef distgen_internal
 #define distgen_internal
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "distgend.h"
 
 #define MAXDISTCOUNT 10
@@ -44,5 +48,9 @@ void addDist(u64 size);
 void initBufs(void);
 
 void runBench(struct entry *buffer, size_t iter, int depChain, int doWrite, double *sum, u64 *aCount);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* end of include guard: distgen_internal */
