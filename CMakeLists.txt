@@ -79,17 +79,17 @@ link_directories(${libponci_path}/lib)
 ########
 # Compiling and linking
 add_executable(distgen distgen.c distgen_internal.c)
-set_property(TARGET distgen PROPERTY C_STANDARD 99)
+set_property(TARGET distgen PROPERTY C_STANDARD 11)
 
 add_library(distgend distgen_internal.c distgend.c)
 add_dependencies(distgend libponci)
-set_property(TARGET distgend PROPERTY C_STANDARD 99)
+set_property(TARGET distgend PROPERTY C_STANDARD 11)
 INSTALL(TARGETS distgend DESTINATION "lib")
 INSTALL(FILES distgend.h DESTINATION "include")
 
-add_executable(distgend_test test.cpp )
-add_dependencies(distgend_test libponci)
-target_link_libraries(distgend_test distgend ponci)
-set_property(TARGET distgend_test PROPERTY CXX_STANDARD 11)
-set_property(TARGET distgend_test PROPERTY C_STANDARD 99)
+add_executable(distgend_example example.cpp )
+add_dependencies(distgend_example libponci)
+target_link_libraries(distgend_example distgend ponci)
+set_property(TARGET distgend_example PROPERTY CXX_STANDARD 11)
+set_property(TARGET distgend_example PROPERTY C_STANDARD 11)
 ########
