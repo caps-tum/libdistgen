@@ -9,6 +9,12 @@
  * Some rights reserved. See LICENSE
  */
 
+#ifdef __cplusplus
+#ifndef ponci_hpp
+#error "Include ponci.hpp when compiling for C++!"
+#endif
+#endif
+
 #ifndef ponci_h
 #define ponci_h
 

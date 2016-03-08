@@ -62,14 +62,14 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 ########
 
 ########
-# ponci
+# libponci
 ExternalProject_Add(libponci
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/ponci
-    CONFIGURE_COMMAND  CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> ${CMAKE_CURRENT_SOURCE_DIR}/vendor/ponci
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor/libponci
+    CONFIGURE_COMMAND  CC=${CMAKE_C_COMPILER} CXX=${CMAKE_CXX_COMPILER} cmake -DCMAKE_BUILD_TYPE=${CMAKE_BUILD_TYPE} -DCMAKE_INSTALL_PREFIX=<INSTALL_DIR> ${CMAKE_CURRENT_SOURCE_DIR}/vendor/libponci
     BUILD_IN_SOURCE 0
     BUILD_COMMAND ${MAKE})
 
-# Store ponci variable in directory
+# Store libponci variable in directory
 ExternalProject_Get_Property(libponci install_dir)
 set (libponci_path ${install_dir})
 include_directories(${libponci_path}/include)
