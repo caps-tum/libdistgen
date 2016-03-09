@@ -7,7 +7,7 @@
  * Some rights reserved. See LICENSE
  */
 
-#include "distgend.h"
+#include "distgen.h"
 #include "distgen_internal.h"
 
 #define _GNU_SOURCE

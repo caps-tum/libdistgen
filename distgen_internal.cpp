@@ -9,7 +9,7 @@
  */
 
 #include "distgen_internal.h"
-#include "distgend.h"
+#include "distgen.h"
 
 #include <assert.h>
 #include <malloc.h>
@@ -120,7 +120,7 @@ void initBufs() {
 
 #pragma omp parallel
 	{
-		assert(tcount == omp_get_num_threads());
+		assert(tcount == (size_t)omp_get_num_threads());
 		struct entry *buf;
 		u64 idx, blk, nextIdx;
 		u64 idxMax = blocks * BLOCKLEN / sizeof(struct entry);
@@ -160,7 +160,7 @@ static int adjustSize(u64 size, u64 diff) {
 }
 
 void runBench(struct entry *buffer, size_t iter, int depChain, int doWrite, double *sum, u64 *aCount) {
-	int i, d, k;
+	int d, k;
 	u64 j, idx, max;
 	double lsum, v = 1.23;
 	u64 idxIncr = blockDiff * BLOCKLEN / sizeof(struct entry);
@@ -168,7 +168,7 @@ void runBench(struct entry *buffer, size_t iter, int depChain, int doWrite, doub
 	int benchType = depChain + 2 * doWrite;
 
 	lsum = *sum;
-	for (i = 0; i < iter; i++) {
+	for (size_t i = 0; i < iter; i++) {
 		lsum += buffer[0].v;
 		for (d = 0; d < distsUsed; d++) {
 			lsum += buffer[0].v;

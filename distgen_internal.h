@@ -15,7 +15,7 @@
 extern "C" {
 #endif
 
-#include "distgend.h"
+#include "distgen.h"
 
 #define MAXDISTCOUNT 10
 #define BLOCKLEN 64
