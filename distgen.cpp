@@ -22,19 +22,20 @@
 #include "distgen_internal.h"
 #include "distgend.h"
 
-#include <assert.h>
-#include <malloc.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
 
 #include <omp.h>
+
+#include <malloc.h>
 
 static u64 clockFreq = 0; // assumed frequency for printing cycles
 static u64 iters_perstat = 0;
 
-static char *clockFreqDef = "2.4G";
+static const char *clockFreqDef = "2.4G";
 
-static u64 toU64(char *s, int isSize) {
+static u64 toU64(const char *s, int isSize) {
 	u64 num = 0, denom = 1;
 	u64 f = isSize ? 1024 : 1000;
 
