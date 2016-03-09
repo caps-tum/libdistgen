@@ -61,13 +61,15 @@ find_package(Threads REQUIRED)
 
 ########
 # Compiling and linking
-add_library(ponci ponci.cpp)
+include_directories(include)
+
+add_library(ponci src/ponci.cpp)
 set_property(TARGET ponci PROPERTY CXX_STANDARD 11)
 INSTALL(TARGETS ponci DESTINATION "lib")
-INSTALL(FILES ponci.h ponci.hpp DESTINATION "include/ponci")
+INSTALL(FILES include/ponci/ponci.h include/ponci/ponci.hpp DESTINATION "include/ponci")
 
 
-add_executable(ponci_example example.cpp)
+add_executable(ponci_example src/example.cpp)
 set_property(TARGET ponci_example PROPERTY CXX_STANDARD 11)
 target_link_libraries(ponci_example ponci)
 target_link_libraries(ponci_example Threads::Threads)

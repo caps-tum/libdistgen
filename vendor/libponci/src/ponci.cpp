@@ -5,11 +5,11 @@
  * Copyright 2016 by LRR-TUM
  * Jens Breitbart     <j.breitbart@tum.de>
  *
- * Licensed under GNU General Public License 2.0 or later.
+ * Licensed under GNU Lesser General Public License 2.1 or later.
  * Some rights reserved. See LICENSE
  */
 
-#include "ponci.hpp"
+#include "ponci/ponci.hpp"
 
 #include <fstream>
 #include <iostream>
