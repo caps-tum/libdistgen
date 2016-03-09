@@ -12,14 +12,15 @@
 #ifndef distgend_h
 #define distgend_h
 
-#include <stddef.h>
-
 #ifdef __cplusplus
 extern "C" {
+#include <cstddef>
+#else
+#include <stddef.h>
 #endif
 
 #define DISTGEN_MAXTHREADS 64
-#define CGROUP_NAME "distgend"
+#define DISTGEN_CGROUP_NAME "distgend"
 
 typedef struct {
 	size_t number_of_threads;

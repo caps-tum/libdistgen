@@ -13,10 +13,11 @@
 #define _GNU_SOURCE
 //#define __USE_GNU
 
-#include <assert.h>
+#include <cassert>
+#include <cstdio>
+#include <cstdlib>
+
 #include <sched.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <sys/syscall.h>
 #include <sys/types.h>
 #include <unistd.h>
@@ -143,7 +144,7 @@ static double bench(distgend_configT config) {
 }
 
 static void set_affinity(distgend_initT init) {
-	cgroup_create(CGROUP_NAME);
+	cgroup_create(DISTGEN_CGROUP_NAME);
 
 	size_t *arr = (size_t *)malloc(sizeof(size_t) * init.number_of_threads);
 
@@ -164,10 +165,10 @@ static void set_affinity(distgend_initT init) {
 	}
 	assert(i == init.number_of_threads);
 
-	cgroup_set_cpus(CGROUP_NAME, arr, init.number_of_threads);
+	cgroup_set_cpus(DISTGEN_CGROUP_NAME, arr, init.number_of_threads);
 
 	for (size_t n = 0; n < init.NUMA_domains; ++n) arr[n] = n;
-	cgroup_set_mems(CGROUP_NAME, arr, init.NUMA_domains);
+	cgroup_set_mems(DISTGEN_CGROUP_NAME, arr, init.NUMA_domains);
 
-	cgroup_add_me(CGROUP_NAME);
+	cgroup_add_me(DISTGEN_CGROUP_NAME);
 }
