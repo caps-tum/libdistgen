@@ -87,7 +87,7 @@ add_library(libdistgen src/distgen_internal.cpp src/libdistgen.cpp)
 add_dependencies(libdistgen libponci)
 set_property(TARGET libdistgen PROPERTY CXX_STANDARD 11)
 INSTALL(TARGETS libdistgen DESTINATION "lib")
-INSTALL(FILES distgen.h DESTINATION "include")
+INSTALL(FILES include/distgen/distgen.h DESTINATION "include/distgen")
 
 add_executable(distgend_example src/example.cpp )
 add_dependencies(distgend_example libponci)
