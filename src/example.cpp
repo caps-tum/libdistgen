@@ -12,7 +12,7 @@
  * Some rights reserved. See LICENSE
  */
 
-#include "distgen.h"
+#include "distgen/distgen.h"
 
 #include <iostream>
 

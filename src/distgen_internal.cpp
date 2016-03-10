@@ -8,8 +8,8 @@
  * Some rights reserved. See LICENSE
  */
 
-#include "distgen_internal.h"
-#include "distgen.h"
+#include "distgen/distgen_internal.h"
+#include "distgen/distgen.h"
 
 #include <assert.h>
 #include <malloc.h>
