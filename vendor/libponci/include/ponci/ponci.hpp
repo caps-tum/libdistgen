@@ -42,9 +42,10 @@ inline void cgroup_set_cpus(const std::string &name, const size_t *cpus, size_t 
 }
 
 inline void cgroup_set_cpus(const std::string &name, const std::vector<size_t> &cpus) {
-
 	cgroup_set_cpus(name.c_str(), &cpus[0], cpus.size());
 }
+
+void cgroup_set_cpus(const std::string &name, const std::vector<unsigned char> &cpus);
 
 inline void cgroup_set_mems(const std::string &name, const size_t *mems, size_t size) {
 	cgroup_set_mems(name.c_str(), mems, size);
@@ -53,6 +54,8 @@ inline void cgroup_set_mems(const std::string &name, const size_t *mems, size_t 
 inline void cgroup_set_mems(const std::string &name, const std::vector<size_t> &mems) {
 	cgroup_set_mems(name.c_str(), &mems[0], mems.size());
 }
+
+void cgroup_set_mems(const std::string &name, const std::vector<unsigned char> &mems);
 
 inline void cgroup_set_memory_migrate(const std::string &name, size_t flag) {
 	cgroup_set_memory_migrate(name.c_str(), flag);

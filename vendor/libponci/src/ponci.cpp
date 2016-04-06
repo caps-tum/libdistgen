@@ -25,17 +25,36 @@
 #include <sys/syscall.h>
 #include <unistd.h>
 
-// TODO function to change prefix
-
 // default mount path
 static std::string path_prefix("/sys/fs/cgroup/");
+
+template <typename T> static inline void write_value_to_file(std::string filename, T val) {
+	write_value_to_file(filename, std::to_string(val).c_str());
+}
+
+template <> void write_value_to_file<const char *>(std::string filename, const char *val) {
+	assert(filename.compare("") != 0);
+
+	FILE *file = fopen(filename.c_str(), "w");
+
+	if (file == nullptr) {
+		throw std::runtime_error(strerror(errno));
+	}
+
+	int status = fputs(val, file);
+	if (status <= 0 || ferror(file) != 0) {
+		throw std::runtime_error(strerror(errno));
+	}
+}
+
+// TODO function to change prefix
 
 /////////////////////////////////////////////////////////////////
 // PROTOTYPES
 /////////////////////////////////////////////////////////////////
 static inline std::string cgroup_path(const char *name);
+template <typename T> static inline void write_vector_to_file(std::string filename, const std::vector<T> &vec);
 template <typename T> static inline void write_array_to_file(std::string filename, T *arr, size_t size);
-template <typename T> static inline void write_value_to_file(std::string filename, T val);
 template <typename T> static inline void append_value_to_file(std::string filename, T val);
 template <typename T> static inline void check_value_in_file(std::string filename, T val);
 
@@ -74,10 +93,22 @@ void cgroup_set_cpus(const char *name, const size_t *cpus, size_t size) {
 	// TODO add check. The current check function does not understand the output
 }
 
+void cgroup_set_cpus(const std::string &name, const std::vector<unsigned char> &cpus) {
+	std::string filename = cgroup_path(name.c_str()) + std::string("cpuset.cpus");
+	write_vector_to_file(filename, cpus);
+	// TODO add check. The current check function does not understand the output
+}
+
 void cgroup_set_mems(const char *name, const size_t *mems, size_t size) {
 	std::string filename = cgroup_path(name) + std::string("cpuset.mems");
 
 	write_array_to_file(filename, mems, size);
+	// TODO add check. The current check function does not understand the output
+}
+
+void cgroup_set_mems(const std::string &name, const std::vector<unsigned char> &mems) {
+	std::string filename = cgroup_path(name.c_str()) + std::string("cpuset.mems");
+	write_vector_to_file(filename, mems);
 	// TODO add check. The current check function does not understand the output
 }
 
@@ -140,13 +171,13 @@ static inline std::string cgroup_path(const char *name) {
 	return res;
 }
 
+template <typename T> static inline void write_vector_to_file(std::string filename, const std::vector<T> &vec) {
+	write_array_to_file(filename, &vec[0], vec.size());
+}
+
 template <typename T> static inline void write_array_to_file(std::string filename, T *arr, size_t size) {
 	assert(size > 0);
 	assert(filename.compare("") != 0);
-
-	std::ofstream file;
-	file.open(filename, std::ofstream::out);
-	if (!file.good()) throw std::runtime_error(strerror(errno));
 
 	std::string str;
 	for (size_t i = 0; i < size; ++i) {
@@ -154,19 +185,7 @@ template <typename T> static inline void write_array_to_file(std::string filenam
 		str.append(",");
 	}
 
-	file << str;
-	if (!file.good()) throw std::runtime_error(strerror(errno));
-}
-
-template <typename T> static inline void write_value_to_file(std::string filename, T val) {
-	assert(filename.compare("") != 0);
-
-	std::ofstream file;
-	file.open(filename, std::ofstream::out);
-	if (!file.good()) throw std::runtime_error(strerror(errno));
-
-	file << val;
-	if (!file.good()) throw std::runtime_error(strerror(errno));
+	write_value_to_file(filename, str.c_str());
 }
 
 template <typename T> static inline void append_value_to_file(std::string filename, T val) {
