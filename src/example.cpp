@@ -30,7 +30,7 @@ int main() {
 	distgend_configT config;
 	for (size_t i = 0; i < init.number_of_threads; ++i) {
 		config.number_of_threads = i + 1;
-		config.threads_to_use[i] = i;
+		config.threads_to_use[i] = static_cast<unsigned char>(i);
 		std::cout << "Using " << i + 1 << " threads:" << std::endl;
 		std::cout << "\tMaximum: " << distgend_get_max_bandwidth(config) << " GByte/s" << std::endl;
 		std::cout << "\tPortion currently available: " << distgend_is_membound(config) << std::endl;
