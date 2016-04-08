@@ -48,7 +48,8 @@ static inline std::string read_line_from_file(const std::string &filename);
 template <typename T> static inline std::vector<T> read_lines_from_file(const std::string &filename);
 
 template <typename T> static inline T string_to_T(const std::string &s, std::size_t &done);
-template <> inline unsigned long string_to_T<unsigned long>(const std::string &s, std::size_t &done);
+// template <> inline unsigned long string_to_T<unsigned long>(const std::string &s, std::size_t &done);
+template <> inline int string_to_T<int>(const std::string &s, std::size_t &done);
 
 /////////////////////////////////////////////////////////////////
 // EXPORTED FUNCTIONS
@@ -165,10 +166,10 @@ void cgroup_kill(const char *name) {
 	cgroup_wait_frozen(name);
 
 	// get all pids
-	std::vector<unsigned long> pids = read_lines_from_file<unsigned long>(cgroup_path(name) + std::string("tasks"));
+	std::vector<int> pids = read_lines_from_file<int>(cgroup_path(name) + std::string("tasks"));
 
 	// send kill
-	for (unsigned long pid : pids) {
+	for (__pid_t pid : pids) {
 		if (kill(pid, SIGKILL) != 0) {
 			throw std::runtime_error(strerror(errno));
 		}
@@ -179,7 +180,7 @@ void cgroup_kill(const char *name) {
 
 	// wait until tasks empty
 	while (pids.size() != 0) {
-		pids = read_lines_from_file<unsigned long>(cgroup_path(name) + std::string("tasks"));
+		pids = read_lines_from_file<int>(cgroup_path(name) + std::string("tasks"));
 	}
 
 	cgroup_delete(name);
@@ -307,6 +308,10 @@ template <typename T> static inline std::vector<T> read_lines_from_file(const st
 	return ret;
 }
 
+template <> int string_to_T<int>(const std::string &s, std::size_t &done) { return stoi(s, &done); }
+
+#if 0
 template <> unsigned long string_to_T<unsigned long>(const std::string &s, std::size_t &done) {
 	return stoul(s, &done);
 }
+#endif
