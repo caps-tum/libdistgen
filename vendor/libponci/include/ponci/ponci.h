@@ -111,4 +111,19 @@ void cgroup_freeze(const char *name);
  */
 void cgroup_thaw(const char *name);
 
+/**
+ * Blocks until the cgroup is frozen.
+ */
+void cgroup_wait_frozen(const char *name);
+
+/**
+ * Blocks until the cgroup is thawed.
+ */
+void cgroup_wait_thawed(const char *name);
+
+/**
+ * Kills all processes in the cgroup.
+ */
+void cgroup_kill(const char *name);
+
 #endif /* end of include guard: ponci_h */

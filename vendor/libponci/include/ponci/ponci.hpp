@@ -74,8 +74,11 @@ inline void cgroup_set_scheduling_domain(const std::string &name, int flag) {
 }
 
 inline void cgroup_freeze(const std::string &name) { cgroup_freeze(name.c_str()); }
-
 inline void cgroup_thaw(const std::string &name) { cgroup_thaw(name.c_str()); }
+inline void cgroup_wait_thawed(const std::string &name) { cgroup_wait_thawed(name.c_str()); }
+inline void cgroup_wait_frozen(const std::string &name) { cgroup_wait_frozen(name.c_str()); }
+
+inline void cgroup_kill(const std::string &name) { cgroup_kill(name.c_str()); }
 
 #endif /* end of the c++ only functions */
 

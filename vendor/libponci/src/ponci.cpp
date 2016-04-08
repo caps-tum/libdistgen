@@ -18,45 +18,37 @@
 #include <string>
 
 #include <cassert>
+#include <cstdio>
 #include <cstring>
 
 #include <errno.h>
+#include <signal.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 // default mount path
 static std::string path_prefix("/sys/fs/cgroup/");
 
-template <typename T> static inline void write_value_to_file(std::string filename, T val) {
-	write_value_to_file(filename, std::to_string(val).c_str());
-}
-
-template <> void write_value_to_file<const char *>(std::string filename, const char *val) {
-	assert(filename.compare("") != 0);
-
-	FILE *file = fopen(filename.c_str(), "w");
-
-	if (file == nullptr) {
-		throw std::runtime_error(strerror(errno));
-	}
-
-	int status = fputs(val, file);
-	if (status <= 0 || ferror(file) != 0) {
-		throw std::runtime_error(strerror(errno));
-	}
-}
-
-// TODO function to change prefix
+// TODO function to change prefix?
 
 /////////////////////////////////////////////////////////////////
 // PROTOTYPES
 /////////////////////////////////////////////////////////////////
 static inline std::string cgroup_path(const char *name);
-template <typename T> static inline void write_vector_to_file(std::string filename, const std::vector<T> &vec);
-template <typename T> static inline void write_array_to_file(std::string filename, T *arr, size_t size);
-template <typename T> static inline void append_value_to_file(std::string filename, T val);
-template <typename T> static inline void check_value_in_file(std::string filename, T val);
+
+template <typename T> static inline void write_vector_to_file(const std::string &filename, const std::vector<T> &vec);
+template <typename T> static inline void write_array_to_file(const std::string &filename, T *arr, size_t size);
+template <typename T> static inline void write_value_to_file(const std::string &filename, T val);
+template <> inline void write_value_to_file<const char *>(const std::string &filename, const char *val);
+template <typename T> static inline void append_value_to_file(const std::string &filename, T val);
+
+static inline std::string read_line_from_file(const std::string &filename);
+template <typename T> static inline std::vector<T> read_lines_from_file(const std::string &filename);
+
+template <typename T> static inline T string_to_T(const std::string &s, std::size_t &done);
+template <> inline unsigned long string_to_T<unsigned long>(const std::string &s, std::size_t &done);
 
 /////////////////////////////////////////////////////////////////
 // EXPORTED FUNCTIONS
@@ -82,34 +74,28 @@ void cgroup_add_task(const char *name, const pid_t tid) {
 	std::string filename = cgroup_path(name) + std::string("tasks");
 
 	append_value_to_file(filename, tid);
-
-	check_value_in_file(filename, tid);
 }
 
 void cgroup_set_cpus(const char *name, const size_t *cpus, size_t size) {
 	std::string filename = cgroup_path(name) + std::string("cpuset.cpus");
 
 	write_array_to_file(filename, cpus, size);
-	// TODO add check. The current check function does not understand the output
 }
 
 void cgroup_set_cpus(const std::string &name, const std::vector<unsigned char> &cpus) {
 	std::string filename = cgroup_path(name.c_str()) + std::string("cpuset.cpus");
 	write_vector_to_file(filename, cpus);
-	// TODO add check. The current check function does not understand the output
 }
 
 void cgroup_set_mems(const char *name, const size_t *mems, size_t size) {
 	std::string filename = cgroup_path(name) + std::string("cpuset.mems");
 
 	write_array_to_file(filename, mems, size);
-	// TODO add check. The current check function does not understand the output
 }
 
 void cgroup_set_mems(const std::string &name, const std::vector<unsigned char> &mems) {
 	std::string filename = cgroup_path(name.c_str()) + std::string("cpuset.mems");
 	write_vector_to_file(filename, mems);
-	// TODO add check. The current check function does not understand the output
 }
 
 void cgroup_set_memory_migrate(const char *name, size_t flag) {
@@ -117,7 +103,6 @@ void cgroup_set_memory_migrate(const char *name, size_t flag) {
 	std::string filename = cgroup_path(name) + std::string("cpuset.memory_migrate");
 
 	write_value_to_file(filename, flag);
-	check_value_in_file(filename, flag);
 }
 
 void cgroup_set_cpus_exclusive(const char *name, size_t flag) {
@@ -125,7 +110,6 @@ void cgroup_set_cpus_exclusive(const char *name, size_t flag) {
 	std::string filename = cgroup_path(name) + std::string("cpuset.cpu_exclusive");
 
 	write_value_to_file(filename, flag);
-	check_value_in_file(filename, flag);
 }
 
 void cgroup_set_mem_hardwall(const char *name, size_t flag) {
@@ -133,7 +117,6 @@ void cgroup_set_mem_hardwall(const char *name, size_t flag) {
 	std::string filename = cgroup_path(name) + std::string("cpuset.mem_hardwall");
 
 	write_value_to_file(filename, flag);
-	check_value_in_file(filename, flag);
 }
 
 void cgroup_set_scheduling_domain(const char *name, int flag) {
@@ -141,7 +124,6 @@ void cgroup_set_scheduling_domain(const char *name, int flag) {
 	std::string filename = cgroup_path(name) + std::string("cpuset.sched_relax_domain_level");
 
 	write_value_to_file(filename, flag);
-	check_value_in_file(filename, flag);
 }
 
 void cgroup_freeze(const char *name) {
@@ -158,6 +140,51 @@ void cgroup_thaw(const char *name) {
 	write_value_to_file(filename, "THAWED");
 }
 
+void cgroup_wait_frozen(const char *name) {
+	assert(strcmp(name, "") != 0);
+	std::string filename = cgroup_path(name) + std::string("freezer.state");
+
+	std::string temp;
+	while (temp != "FROZEN\n") {
+		temp = read_line_from_file(filename);
+	}
+}
+
+void cgroup_wait_thawed(const char *name) {
+	assert(strcmp(name, "") != 0);
+	std::string filename = cgroup_path(name) + std::string("freezer.state");
+
+	std::string temp;
+	while (temp != "THAWED\n") {
+		temp = read_line_from_file(filename);
+	}
+}
+
+void cgroup_kill(const char *name) {
+	cgroup_freeze(name);
+	cgroup_wait_frozen(name);
+
+	// get all pids
+	std::vector<unsigned long> pids = read_lines_from_file<unsigned long>(cgroup_path(name) + std::string("tasks"));
+
+	// send kill
+	for (unsigned long pid : pids) {
+		if (kill(pid, SIGKILL) != 0) {
+			throw std::runtime_error(strerror(errno));
+		}
+	}
+
+	// wake up
+	cgroup_thaw(name);
+
+	// wait until tasks empty
+	while (pids.size() != 0) {
+		pids = read_lines_from_file<unsigned long>(cgroup_path(name) + std::string("tasks"));
+	}
+
+	cgroup_delete(name);
+}
+
 /////////////////////////////////////////////////////////////////
 // INTERNAL FUNCTIONS
 /////////////////////////////////////////////////////////////////
@@ -171,11 +198,11 @@ static inline std::string cgroup_path(const char *name) {
 	return res;
 }
 
-template <typename T> static inline void write_vector_to_file(std::string filename, const std::vector<T> &vec) {
+template <typename T> static inline void write_vector_to_file(const std::string &filename, const std::vector<T> &vec) {
 	write_array_to_file(filename, &vec[0], vec.size());
 }
 
-template <typename T> static inline void write_array_to_file(std::string filename, T *arr, size_t size) {
+template <typename T> static inline void write_array_to_file(const std::string &filename, T *arr, size_t size) {
 	assert(size > 0);
 	assert(filename.compare("") != 0);
 
@@ -188,28 +215,98 @@ template <typename T> static inline void write_array_to_file(std::string filenam
 	write_value_to_file(filename, str.c_str());
 }
 
-template <typename T> static inline void append_value_to_file(std::string filename, T val) {
+template <typename T> static inline void append_value_to_file(const std::string &filename, T val) {
 	assert(filename.compare("") != 0);
 
-	std::ofstream file;
-	file.open(filename, std::ofstream::app);
-	if (!file.good()) throw std::runtime_error(strerror(errno));
+	FILE *f = fopen(filename.c_str(), "a+");
+	if (f == nullptr) {
+		throw std::runtime_error(strerror(errno));
+	}
+	std::string str = std::to_string(val);
 
-	file << val;
-	if (!file.good()) throw std::runtime_error(strerror(errno));
+	if (fputs(str.c_str(), f) == EOF && ferror(f) != 0) {
+		throw std::runtime_error(strerror(errno));
+	}
+	if (fclose(f) != 0) {
+		throw std::runtime_error(strerror(errno));
+	}
 }
 
-template <typename T> static inline void check_value_in_file(std::string filename, T val) {
-	// check if the value was actually written
-	// ofstream errors are not sufficient (?)
-	std::ifstream infile(filename);
-	std::string line;
+template <typename T> static inline void write_value_to_file(const std::string &filename, T val) {
+	write_value_to_file(filename, std::to_string(val).c_str());
+}
 
-	while (std::getline(infile, line)) {
-		std::istringstream iss(line);
-		T n;
-		iss >> n;
-		if (val == n) return;
+template <> void write_value_to_file<const char *>(const std::string &filename, const char *val) {
+	assert(filename.compare("") != 0);
+
+	FILE *file = fopen(filename.c_str(), "w+");
+
+	if (file == nullptr) {
+		throw std::runtime_error(strerror(errno));
 	}
-	throw std::runtime_error("Value was not found in file.");
+
+	int status = fputs(val, file);
+	if (status <= 0 || ferror(file) != 0) {
+		throw std::runtime_error(strerror(errno));
+	}
+
+	if (fclose(file) != 0) {
+		throw std::runtime_error(strerror(errno));
+	}
+}
+
+static inline std::string read_line_from_file(const std::string &filename) {
+	assert(filename.compare("") != 0);
+
+	FILE *file = fopen(filename.c_str(), "r");
+
+	if (file == nullptr) {
+		throw std::runtime_error(strerror(errno));
+	}
+
+	char temp[255];
+	if (fgets(temp, 255, file) == nullptr && !feof(file)) {
+		throw std::runtime_error("Error while reading file in libponci. Buffer to small?");
+	}
+
+	if (feof(file)) return std::string();
+
+	if (fclose(file) != 0) {
+		throw std::runtime_error(strerror(errno));
+	}
+
+	return std::string(temp);
+}
+
+template <typename T> static inline std::vector<T> read_lines_from_file(const std::string &filename) {
+	assert(filename.compare("") != 0);
+
+	FILE *file = fopen(filename.c_str(), "r");
+
+	if (file == nullptr) {
+		throw std::runtime_error(strerror(errno));
+	}
+
+	std::vector<T> ret;
+
+	char temp[255];
+	while (true) {
+		if (fgets(temp, 255, file) == nullptr && !feof(file)) {
+			throw std::runtime_error("Error while reading file in libponci. Buffer to small?");
+		}
+		if (feof(file)) break;
+		std::size_t done = 0;
+		T i = string_to_T<T>(std::string(temp), done);
+		if (done != 0) ret.push_back(i);
+	}
+
+	if (fclose(file) != 0) {
+		throw std::runtime_error(strerror(errno));
+	}
+
+	return ret;
+}
+
+template <> unsigned long string_to_T<unsigned long>(const std::string &s, std::size_t &done) {
+	return stoul(s, &done);
 }

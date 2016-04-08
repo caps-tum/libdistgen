@@ -73,4 +73,8 @@ add_executable(ponci_example src/example.cpp)
 set_property(TARGET ponci_example PROPERTY CXX_STANDARD 11)
 target_link_libraries(ponci_example ponci)
 target_link_libraries(ponci_example Threads::Threads)
+
+add_executable(cgkill src/cgkill.cpp)
+set_property(TARGET ponci_example PROPERTY CXX_STANDARD 11)
+target_link_libraries(cgkill ponci)
 ########

@@ -1,9 +1,6 @@
 /**
  * Simple ponci test application.
  *
- * Compile with:
- *   g++ -std=c++11 -o ponic_test ponci.cpp test.cpp -lpthread
- *
  * Copyright 2016 by LRR-TUM
  * Jens Breitbart     <j.breitbart@tum.de>
  *
@@ -19,8 +16,8 @@
 
 static void sleeper(const std::string name) {
 	cgroup_create(name);
-	size_t arr[] = {0};
 
+	size_t arr[] = {0};
 	cgroup_set_cpus(name, arr, 1);
 	cgroup_set_mems(name, arr, 1);
 	cgroup_add_me(name);
