@@ -42,8 +42,8 @@ void distgend_init(distgend_initT init);
 
 /**
  * Return a values in the range of ~[0-1] with
- * - ~1 == no load on the memory system and
- * - ~0 == memory system fully utilized
+ * - ~1   == no load on the memory system and
+ * - ~0.3 == memory system fully utilized
  */
 double distgend_is_membound(distgend_configT config);
 

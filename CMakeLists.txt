@@ -44,7 +44,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
   # Using Intel C++
   if ("${CMAKE_BUILD_TYPE}" STREQUAL "release")
-    ADD_DEFINITIONS(-g -fast)
+    # Don't use -fast. IPO will remove our test code :)
+    ADD_DEFINITIONS(-g -O3 -no-prec-div -static -xHost)
   endif()
 
   if ("${CMAKE_BUILD_TYPE}" STREQUAL "debug")
