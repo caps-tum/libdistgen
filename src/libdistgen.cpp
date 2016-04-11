@@ -119,10 +119,9 @@ double distgend_is_membound(distgend_configT config) {
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 static double bench(distgend_configT config) {
-	u64 aCount = 0;
-	const double t1 = wtime();
+	double ret = 0.0;
 
-#pragma omp parallel reduction(+ : aCount)
+#pragma omp parallel reduction(+ : ret)
 	{
 		size_t tid = (size_t)omp_get_thread_num();
 		for (size_t i = 0; i < config.number_of_threads; ++i) {
@@ -130,17 +129,17 @@ static double bench(distgend_configT config) {
 				double tsum = 0.0;
 				u64 taCount = 0;
 
+				const double t1 = wtime();
 				runBench(buffer[omp_get_thread_num()], iter, depChain, doWrite, &tsum, &taCount);
+				const double t2 = wtime();
 
-				aCount += taCount;
+				const double temp = taCount * 64.0 / 1024.0 / 1024.0 / 1024.0;
+				ret += temp / (t2 - t1);
 			}
 		}
 	}
 
-	const double t2 = wtime();
-
-	const double gData = aCount * 64.0 / 1024.0 / 1024.0 / 1024.0;
-	return gData / (t2 - t1);
+	return ret;
 }
 
 static void set_affinity(distgend_initT init) {

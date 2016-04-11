@@ -1,9 +1,6 @@
 /**
  * Simple disgend test application.
  *
- * Compile with:
- *  g++ -O2 -o distgend test.cpp distgend.c distgen_internal.c -fopenmp
- *
  * Copyright 2016 by LRR-TUM
  * Jens Breitbart     <j.breitbart@tum.de>
  * Josef Weidendorfer <weidendo@in.tum.de>
@@ -19,8 +16,8 @@
 int main() {
 	distgend_initT init;
 	init.SMT_factor = 1;
-	init.NUMA_domains = 1;
-	init.number_of_threads = 4;
+	init.NUMA_domains = 2;
+	init.number_of_threads = 16;
 
 	std::cout << "Starting distgen initialization ...";
 	std::cout.flush();

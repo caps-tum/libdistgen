@@ -8,9 +8,6 @@
 * given layers (caches) of the memory hierarchy.
 * The idea is to approximate the access pattern of real codes.
 *
-* Compile with:
-*      gcc -o distgen distgen.c distgen_internal.c -fopenmp -O3
-*
 * Copyright 2016 by LRR-TUM
 * Jens Breitbart     <j.breitbart@tum.de>
 * Josef Weidendorfer <weidendo@in.tum.de>

@@ -83,9 +83,7 @@ void initBufs() {
 	assert(tcount < DISTGEN_MAXTHREADS);
 	assert(sizeof(struct entry) == 16);
 
-	int d;
-
-	for (d = 0; d < distsUsed; d++) {
+	for (int d = 0; d < distsUsed; d++) {
 		// each memory block of cacheline size gets accessed
 		distBlocks[d] = (distSize[d] + BLOCKLEN - 1) / BLOCKLEN;
 		distIter[d] = (int)(distSize[0] / distSize[d]);
@@ -93,7 +91,7 @@ void initBufs() {
 
 	if (verbose) {
 		fprintf(stderr, "  number of distances: %d\n", distsUsed);
-		for (d = 0; d < distsUsed; d++)
+		for (int d = 0; d < distsUsed; d++)
 			fprintf(stderr, "    D%2d: size %llu (%d traversals per iteration)\n", d + 1, distSize[d], distIter[d]);
 	}
 
@@ -104,7 +102,7 @@ void initBufs() {
 	if (verbose) {
 		// calculate expected number of accesses
 		size_t aCount = 0;
-		for (d = 0; d < distsUsed; d++) aCount += distIter[d] * distBlocks[d];
+		for (int d = 0; d < distsUsed; d++) aCount += distIter[d] * distBlocks[d];
 		if (doWrite) aCount += aCount;
 		char sBuf[20], tsBuf[20], acBuf[20], tacBuf[20], tasBuf[20];
 		prettyVal(sBuf, BLOCKLEN * blocks);
@@ -129,6 +127,7 @@ void initBufs() {
 		// allocate and initialize used memory
 		buffer[omp_get_thread_num()] = (struct entry *)memalign(64, blocks * BLOCKLEN);
 		buf = buffer[omp_get_thread_num()];
+		assert(buf != nullptr);
 		for (idx = 0; idx < idxMax; idx++) {
 			buf[idx].v = (double)idx;
 			buf[idx].next = 0;
