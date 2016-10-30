@@ -10,9 +10,6 @@
 #include "distgen/distgen.h"
 #include "distgen/distgen_internal.h"
 
-//#define _GNU_SOURCE
-//#define __USE_GNU
-
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
@@ -127,9 +124,9 @@ double distgend_is_membound(distgend_configT config) {
 //////////////////////////////////////////////////////////////////////////////////////////////////
 
 static void *thread_benchmark(void *arg) {
-	thread_argsT *thread_args = (thread_argsT*)arg;
-	double *ret = (double*)calloc(1, sizeof(double));
-	
+	thread_argsT *thread_args = (thread_argsT *)arg;
+	double *ret = (double *)calloc(1, sizeof(double));
+
 	pthread_barrier_wait(&barrier);
 	for (size_t i = 0; i < thread_args->config->number_of_threads; ++i) {
 		if (thread_args->tid == thread_args->config->threads_to_use[i]) {
@@ -145,38 +142,33 @@ static void *thread_benchmark(void *arg) {
 		}
 	}
 
-	pthread_exit((void*)ret);
+	pthread_exit((void *)ret);
 }
-
 
 static double bench(distgend_configT config) {
 	double ret = 0.0;
-	
+
 	thread_argsT thread_args[system_config.number_of_threads];
-	
+
 	// inititalize barrier
-	int res = pthread_barrier_init(&barrier, 
-	    			       NULL,
-				       system_config.number_of_threads);
+	int res = pthread_barrier_init(&barrier, NULL, system_config.number_of_threads);
 	assert(res == 0);
-	
-	for (size_t i = 0; i<system_config.number_of_threads; ++i) {
+
+	for (size_t i = 0; i < system_config.number_of_threads; ++i) {
 		thread_args[i].tid = i;
 		thread_args[i].config = &config;
-		int res = pthread_create(&threads[i],
-		    			 &thread_attr[i],
-		                         thread_benchmark, &thread_args[i]);
+		int res = pthread_create(&threads[i], &thread_attr[i], thread_benchmark, &thread_args[i]);
 		assert(res == 0);
 	}
-	
-	for (size_t i = 0; i<system_config.number_of_threads; ++i) {
+
+	for (size_t i = 0; i < system_config.number_of_threads; ++i) {
 		double *ret_tmp;
-		int res = pthread_join(threads[i], (void**)&ret_tmp);
+		int res = pthread_join(threads[i], (void **)&ret_tmp);
 		assert(res == 0);
 		ret += *ret_tmp;
-		free (ret_tmp);
+		free(ret_tmp);
 	}
-	
+
 	// destroy barrier
 	res = pthread_barrier_destroy(&barrier);
 	assert(res == 0);
@@ -205,13 +197,11 @@ static void set_affinity(distgend_initT init) {
 	assert(i == init.number_of_threads);
 
 	// set thread affinity
-	for (size_t i = 0; i<init.number_of_threads; ++i) {
+	for (size_t i = 0; i < init.number_of_threads; ++i) {
 		cpu_set_t set;
 		CPU_ZERO(&set);
 		CPU_SET(arr[i], &set);
-		int res = pthread_attr_setaffinity_np(&thread_attr[i],
-						      sizeof(cpu_set_t),
-						      &set);
+		int res = pthread_attr_setaffinity_np(&thread_attr[i], sizeof(cpu_set_t), &set);
 		assert(res == 0);
 	}
 

@@ -17,7 +17,7 @@ int main() {
 	distgend_initT init;
 	init.SMT_factor = 1;
 	init.NUMA_domains = 2;
-	init.number_of_threads = 16;
+	init.number_of_threads = 4;
 
 	std::cout << "Starting distgen initialization ...";
 	std::cout.flush();
