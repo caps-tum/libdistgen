@@ -48,6 +48,18 @@ void distgend_init(distgend_initT init);
 double distgend_is_membound(distgend_configT config);
 
 /**
+ * Scales a value returned by distgend_is_membound
+ * - ~1   == no load on the memory system and
+ * - ~0 == memory system fully utilized
+ */
+double distgend_scale(distgend_configT config, double input);
+
+/**
+ * Identical to distgend_scale(distgend_is_membound)
+ */
+double distgend_is_membound_scaled(distgend_configT config);
+
+/**
  * Returns the GB/s expected for the giving config if the system is idle.
  */
 double distgend_get_max_bandwidth(distgend_configT config);

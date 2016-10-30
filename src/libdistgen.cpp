@@ -119,6 +119,36 @@ double distgend_is_membound(distgend_configT config) {
 	return (res > 1.0) ? 1.0 : res;
 }
 
+double distgend_scale(distgend_configT config, double input) {
+	// there is no need to scale the value if all cores have been used to run distgen
+	if (config.number_of_threads == system_config.number_of_threads) return input;
+
+	// we scale the value based on the following idea:
+	// distgen only reads from memory during measurements.
+	// the other application typically uses read + write from memory
+	// the hardware treats reads and write entries in the memory controller
+	// queue identical
+	// in use : measured => minimum value returned by distgen_is_membound
+	// 1 : 1 => 1 / (2 + 1) => 0.33 minimum
+	// 1 : 2 => 2*1 / (2 + 2*1) => 0.55
+	// 2 : 1 => 1 / (2*2 +1) => 0.2
+	const size_t in_use = system_config.number_of_threads / system_config.SMT_factor - config.number_of_threads;
+	const double min = static_cast<double>(config.number_of_threads) / (2.0 * in_use + config.number_of_threads);
+	const double max = 1;
+
+	if (input > 1.0) input = 1.0;
+	if (input < min) input = min;
+
+	//        (1 - 0)(x - min)
+	// f(x) = ----------------  + 0
+	//            max - min
+	return (input - min) / (max - min);
+}
+
+double distgend_is_membound_scaled(distgend_configT config) {
+	return distgend_scale(config, distgend_is_membound(config));
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////////////
 // INTERNAL FUNCTIONS
 //////////////////////////////////////////////////////////////////////////////////////////////////
