@@ -12,7 +12,6 @@
 #include "distgen/distgen.h"
 
 #include <assert.h>
-#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/time.h>
@@ -91,7 +90,8 @@ static void *init_memory_per_thread(void *arg) {
 	u64 idxIncr = blockDiff * BLOCKLEN / sizeof(entry);
 
 	// allocate and initialize used memory
-	buffer[tid] = static_cast<entry *>(memalign(64, blocks * BLOCKLEN));
+	int err = posix_memalign((void **)&buffer[tid], 64, blocks * BLOCKLEN);
+	assert(err == 0);
 	buf = buffer[tid];
 	assert(buf != nullptr);
 	for (idx = 0; idx < idxMax; idx++) {
