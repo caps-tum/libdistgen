@@ -213,6 +213,12 @@ static void set_affinity(distgend_initT init) {
 
 	size_t i = 0;
 
+	// binding is created as following
+	// say we have 2 NUMA * 4 cores * 2 SMT
+	// 0-3  = 1. HTC on NUMA 0
+	// 4-7  = 2. HTC on NUMA 0
+	// 8-11 = 1. HTC on NUMA 1
+	// ...
 	for (size_t n = 0; n < init.NUMA_domains; ++n) {
 		size_t next_core = n * phys_cores_per_numa;
 		for (size_t s = 0; s < init.SMT_factor; ++s) {
