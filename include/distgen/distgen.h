@@ -19,8 +19,7 @@ extern "C" {
 #include <stddef.h>
 #endif
 
-#define DISTGEN_MAXTHREADS 64
-#define DISTGEN_CGROUP_NAME "distgend"
+#define DISTGEN_MAXTHREADS 255
 
 typedef struct {
 	size_t number_of_threads;
