@@ -63,6 +63,11 @@ double distgend_is_membound_scaled(distgend_configT config);
  */
 double distgend_get_max_bandwidth(distgend_configT config);
 
+/**
+ * Returns the GB/s measured for core_num cores. Uses compact pinning on cores, not HTCs.
+ */
+double distgend_get_measured_idle_bandwidth(size_t core_num);
+
 #ifdef __cplusplus
 }
 #endif

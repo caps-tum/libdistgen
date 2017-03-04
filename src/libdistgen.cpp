@@ -73,7 +73,7 @@ void distgend_init(distgend_initT init) {
 
 	// fill distgen_mem_bw_results
 	distgend_configT config;
-	for (unsigned char i = 0; i < init.number_of_threads / init.NUMA_domains; ++i) {
+	for (unsigned char i = 0; i < init.number_of_threads / init.SMT_factor; ++i) {
 		config.number_of_threads = i + 1;
 		config.threads_to_use[i] = i;
 
@@ -90,6 +90,7 @@ double distgend_get_max_bandwidth(distgend_configT config) {
 	double res = 0.0;
 
 	size_t cores_per_numa_domain[DISTGEN_MAXTHREADS];
+	assert(system_config.NUMA_domains < DISTGEN_MAXTHREADS);
 	for (size_t i = 0; i < system_config.NUMA_domains; ++i) cores_per_numa_domain[i] = 0;
 
 	// for every NUMA domain we use
@@ -107,6 +108,11 @@ double distgend_get_max_bandwidth(distgend_configT config) {
 	}
 
 	return res;
+}
+
+double distgend_get_measured_idle_bandwidth(size_t core_num) {
+	assert(core_num - 1 < system_config.number_of_threads / system_config.SMT_factor);
+	return distgen_mem_bw_results[core_num - 1];
 }
 
 double distgend_is_membound(distgend_configT config) {
@@ -209,28 +215,15 @@ static double bench(distgend_configT config) {
 static void set_affinity(distgend_initT init) {
 	size_t *arr = (size_t *)malloc(sizeof(size_t) * init.number_of_threads);
 
-	const size_t phys_cores_per_numa = init.number_of_threads / (init.NUMA_domains * init.SMT_factor);
-
-	size_t i = 0;
-
 	// binding is created as following
 	// say we have 2 NUMA * 4 cores * 2 SMT
-	// 0-3  = 1. HTC on NUMA 0
-	// 4-7  = 2. HTC on NUMA 0
+	// 0-3  = 0. HTC on NUMA 0
+	// 4-7  = 0. HTC on NUMA 1
 	// 8-11 = 1. HTC on NUMA 1
 	// ...
-	for (size_t n = 0; n < init.NUMA_domains; ++n) {
-		size_t next_core = n * phys_cores_per_numa;
-		for (size_t s = 0; s < init.SMT_factor; ++s) {
-			for (size_t c = 0; c < phys_cores_per_numa; ++c) {
-				arr[i] = next_core;
-				++next_core;
-				++i;
-			}
-			next_core += phys_cores_per_numa * (init.NUMA_domains - 1);
-		}
+	for (size_t i = 0; i < init.number_of_threads; ++i) {
+		arr[i] = i;
 	}
-	assert(i == init.number_of_threads);
 
 	// set thread affinity
 	for (size_t i = 0; i < init.number_of_threads; ++i) {
