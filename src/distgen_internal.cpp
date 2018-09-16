@@ -19,6 +19,11 @@
 #include <pthread.h>
 #include <sched.h>
 
+#ifdef __QNXNTO__
+#include <sys/neutrino.h>
+#include <sys/syspage.h>
+#endif
+
 static pthread_t threads[DISTGEN_MAXTHREADS];
 static pthread_attr_t thread_attr[DISTGEN_MAXTHREADS];
 
@@ -84,6 +89,34 @@ void addDist(u64 size) {
 
 static void *init_memory_per_thread(void *arg) {
 	size_t tid = *static_cast<size_t *>(arg);
+
+#ifdef __QNXNTO__
+	// QNX does not support pthread thread affinity. Set affinity here.
+	// TODO duplicated code in libdistgen.cpp
+	unsigned int number_of_cpus = RMSK_SIZE(_syspage_ptr->num_cpu);
+	const int size = number_of_cpus * sizeof(unsigned int) * 2;
+
+	unsigned int *rsizep = (unsigned int *)malloc(size);
+	assert(rsizep != nullptr);
+	memset((void *)rsizep, 0x00, size);
+
+	*rsizep = number_of_cpus;
+
+	/* Set the runmask. Call this macro once for each processor
+	the thread can run on. */
+	unsigned int *rmaskp = rsizep + 1;
+	RMSK_SET(tid, rmaskp);
+
+	/* Set the inherit mask. Call this macro once for each
+	processor the thread's children can run on. */
+	unsigned int *imaskp = rmaskp + number_of_cpus;
+	RMSK_SET(tid, imaskp);
+
+	if (ThreadCtl(_NTO_TCTL_RUNMASK_GET_AND_SET_INHERIT, rsizep) == -1) {
+		assert(false);
+	}
+#endif
+
 	struct entry *buf;
 	u64 idx, blk, nextIdx;
 	u64 idxMax = blocks * BLOCKLEN / sizeof(entry);
@@ -109,6 +142,10 @@ static void *init_memory_per_thread(void *arg) {
 		buf[idx].next = buf + nextIdx;
 		idx = nextIdx;
 	}
+
+#ifdef __QNXNTO__
+	free(rsizep);
+#endif
 
 	return nullptr;
 }

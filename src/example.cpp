@@ -18,6 +18,10 @@ int main() {
 	init.SMT_factor = 1;
 	init.NUMA_domains = 1;
 	init.number_of_threads = 4;
+#ifdef __QNXNTO__	
+	init.number_of_threads = 2;
+#endif
+
 
 	std::cout << "Starting distgen initialization ...";
 	std::cout.flush();

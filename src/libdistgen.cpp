@@ -13,9 +13,19 @@
 #include <cassert>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 
 #include <sched.h>
+
+#ifdef __linux__
 #include <sys/syscall.h>
+#endif
+
+#ifdef __QNXNTO__
+#include <sys/neutrino.h>
+#include <sys/syspage.h>
+#endif
+
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -61,9 +71,15 @@ static void internal_init(distgend_initT init) {
 	// number of iterations. currently a magic number
 	iter = 1000;
 
-	// set a size of 50 MB
 	// TODO we should compute this based on L3 size
+#ifdef __linux__
+	// set a size of 50 MB
 	addDist(50000000);
+#endif
+#ifdef __QNXNTO__
+	// set a size of 10 MB
+	addDist(10000000);
+#endif
 
 	// set the number of threads to the maximum available in the system
 	tcount = init.number_of_threads;
@@ -175,7 +191,32 @@ double distgend_is_membound_scaled(distgend_configT config) {
 static void *thread_benchmark(void *arg) {
 	thread_argsT *thread_args = (thread_argsT *)arg;
 	double *ret = (double *)calloc(1, sizeof(double));
+#ifdef __QNXNTO__
+	// QNX does not support pthread thread affinity. Set affinity here.
+	// TODO duplicated code in distgen_internal.cpp
+	unsigned int number_of_cpus = RMSK_SIZE(_syspage_ptr->num_cpu);
+	const int size = number_of_cpus * sizeof(unsigned int) * 2;
 
+	unsigned int *rsizep = (unsigned int *)malloc(size);
+	assert(rsizep != nullptr);
+	memset((void *)rsizep, 0x00, size);
+
+	*rsizep = number_of_cpus;
+
+	/* Set the runmask. Call this macro once for each processor
+	the thread can run on. */
+	unsigned int *rmaskp = rsizep + 1;
+	RMSK_SET(thread_args->tid, rmaskp);
+
+	/* Set the inherit mask. Call this macro once for each
+	processor the thread's children can run on. */
+	unsigned int *imaskp = rmaskp + number_of_cpus;
+	RMSK_SET(thread_args->tid, imaskp);
+
+	if (ThreadCtl(_NTO_TCTL_RUNMASK_GET_AND_SET_INHERIT, rsizep) == -1) {
+		assert(false);
+	}
+#endif
 	pthread_barrier_wait(&barrier);
 	for (size_t i = 0; i < thread_args->config->number_of_threads; ++i) {
 		if (thread_args->tid == thread_args->config->threads_to_use[i]) {
@@ -190,7 +231,9 @@ static void *thread_benchmark(void *arg) {
 			*ret += temp / (t2 - t1);
 		}
 	}
-
+#ifdef __QNXNTO__
+	free(rsizep);
+#endif
 	pthread_exit((void *)ret);
 }
 
@@ -221,18 +264,18 @@ static double bench(distgend_configT config) {
 	// destroy barrier
 	res = pthread_barrier_destroy(&barrier);
 	assert(res == 0);
-
 	return ret;
 }
 
 static void set_affinity(distgend_initT init) {
+#ifdef __linux__
 	size_t *arr = (size_t *)malloc(sizeof(size_t) * init.number_of_threads);
 
 	// binding is created as following
 	// say we have 2 NUMA * 4 cores * 2 SMT
 	// 0-3  = 0. HTC on NUMA 0
 	// 4-7  = 0. HTC on NUMA 1
-	// 8-11 = 1. HTC on NUMA 1
+	// 8-11 = 1. HTC on NUMA 0
 	// ...
 	for (size_t i = 0; i < init.number_of_threads; ++i) {
 		arr[i] = i;
@@ -248,4 +291,5 @@ static void set_affinity(distgend_initT init) {
 	}
 
 	free(arr);
+#endif
 }
