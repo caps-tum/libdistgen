@@ -1,6 +1,6 @@
 # libdistgen
 
-[![Build Status](https://travis-ci.org/lrr-tum/libdistgen.svg?branch=master)](https://travis-ci.org/lrr-tum/libdistgen)
+[![Build Status](https://travis-ci.org/caps-tum/libdistgen.svg?branch=master)](https://travis-ci.org/caps-tum/libdistgen)
 
 libdistgen is a library to estimate the memory bandwidth usage of applications.
 
